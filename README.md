@@ -456,3 +456,11 @@ MIT - see [LICENSE](LICENSE) for details.
 ## Contributing
 
 Contributions are welcome! Please open an issue or pull request.
+
+---
+
+## Contributors
+
+| <img src="https://github.com/LukaG712.png" width="40" height="40" alt="LukaG712" /> | [LukaG712](https://github.com/LukaG712) |
+|:---:|---|
+| Creator & Maintainer | Original author, full implementation |
