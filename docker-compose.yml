@@ -1,0 +1,67 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - HOST=0.0.0.0
+      - API_KEY=${API_KEY:-opencrawl-dev-key-change-me}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - RATE_LIMIT_MAX=60
+      - RATE_LIMIT_WINDOW_MS=60000
+      - SCRAPE_TIMEOUT=30000
+      - SCRAPE_ONLY_MAIN_CONTENT=true
+      - SCRAPE_BLOCK_ADS=true
+      - CRAWL_MAX_DEPTH=10
+      - CRAWL_MAX_PAGES=100
+      - CRAWL_MAX_CONCURRENCY=5
+      - CRAWL_DELAY=1000
+      - BROWSER_HEADLESS=true
+      - LOG_LEVEL=info
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  worker:
+    build: .
+    command: node dist/worker.js
+    environment:
+      - PORT=3000
+      - HOST=0.0.0.0
+      - API_KEY=${API_KEY:-opencrawl-dev-key-change-me}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - SCRAPE_TIMEOUT=30000
+      - SCRAPE_ONLY_MAIN_CONTENT=true
+      - SCRAPE_BLOCK_ADS=true
+      - CRAWL_MAX_DEPTH=10
+      - CRAWL_MAX_PAGES=100
+      - CRAWL_MAX_CONCURRENCY=5
+      - CRAWL_DELAY=1000
+      - BROWSER_HEADLESS=true
+      - LOG_LEVEL=info
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  redis_data:
