@@ -21,11 +21,11 @@ export async function sendWebhook(
 
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      'User-Agent': 'OpenCrawl-Webhook/1.0',
+      'User-Agent': 'Spectra-Webhook/1.0',
     };
 
     if (signature) {
-      headers['X-OpenCrawl-Signature'] = signature;
+      headers['X-Spectra-Signature'] = signature;
     }
 
     logger.info(`Sending webhook to ${url}`);

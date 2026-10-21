@@ -1,4 +1,4 @@
-﻿```
+```
  ::::::::  :::::::::  :::::::::: ::::    :::  ::::::::  :::::::::      :::     :::       ::: :::        
 :+:    :+: :+:    :+: :+:        :+:+:   :+: :+:    :+: :+:    :+:   :+: :+:   :+:       :+: :+:        
 +:+    +:+ +:+    +:+ +:+        :+:+:+  +:+ +:+        +:+    +:+  +:+   +:+  +:+       +:+ +:+        
@@ -74,8 +74,8 @@ Scrape single pages, recursively crawl entire sites, and discover URLs - all ret
 
 ```bash
 # Clone the repository
-git clone https://github.com/LukaG712/OpenCrawl.git
-cd OpenCrawl
+git clone https://github.com/LukaG712/Spectra.git
+cd Spectra
 
 # Copy environment file
 cp .env.example .env
@@ -247,7 +247,7 @@ Requires `LLM_PROVIDER=openai` and `OPENAI_API_KEY` to be set.
 
 ```bash
 curl -X POST http://localhost:3000/scrape \
-  -H "Authorization: Bearer opencrawl-dev-key-change-me" \
+  -H "Authorization: Bearer Spectra-dev-key-change-me" \
   -H "Content-Type: application/json" \
   -d '{"url": "https://example.com", "formats": ["markdown", "html"]}'
 ```
@@ -691,7 +691,7 @@ All configuration is via environment variables. See `.env.example` for all optio
 |----------|---------|-------------|
 | `PORT` | `3000` | API server port |
 | `HOST` | `0.0.0.0` | Bind address |
-| `API_KEY` | `opencrawl-dev-key-change-me` | API authentication key |
+| `API_KEY` | `Spectra-dev-key-change-me` | API authentication key |
 | `REDIS_HOST` | `localhost` | Redis host |
 | `REDIS_PORT` | `6379` | Redis port |
 | `RATE_LIMIT_MAX` | `60` | Max requests per window |
@@ -717,24 +717,24 @@ All configuration is via environment variables. See `.env.example` for all optio
 ## Architecture
 
 ```
-┌─────────────┐     ┌──────────────┐     ┌─────────────┐
-│   Client    │────▶│  API Server  │────▶│    Redis    │
-│  (curl/SDK) │◀────│  (Fastify)   │◀────│   (BullMQ)  │
-└─────────────┘     └──────┬───────┘     └─────────────┘
-                           │
-                           │ queues crawl jobs
-                           ▼
-                    ┌──────────────┐     ┌──────────────┐
-                    │   Worker     │────▶│  Playwright  │
-                    │  (BullMQ)    │     │  (Chromium)  │
-                    └──────────────┘     └──────────────┘
-                           │
-                           ▼
-                    ┌──────────────┐
-                    │ Content Proc │
-                    │ Cheerio +    │
-                    │   Turndown   │
-                    └──────────────┘
++-------------+     +--------------+     +-------------+
+�   Client    �----?�  API Server  �----?�    Redis    �
+�  (curl/SDK) �?----�  (Fastify)   �?----�   (BullMQ)  �
++-------------+     +--------------+     +-------------+
+                           �
+                           � queues crawl jobs
+                           ?
+                    +--------------+     +--------------+
+                    �   Worker     �----?�  Playwright  �
+                    �  (BullMQ)    �     �  (Chromium)  �
+                    +--------------+     +--------------+
+                           �
+                           ?
+                    +--------------+
+                    � Content Proc �
+                    � Cheerio +    �
+                    �   Turndown   �
+                    +--------------+
 ```
 
 1. **API Server** - Handles HTTP requests, authentication, rate limiting, and synchronous operations (scrape, map)
@@ -748,66 +748,66 @@ All configuration is via environment variables. See `.env.example` for all optio
 ## Project Structure
 
 ```
-opencrawl/
-├── src/
-│   ├── index.ts              # API server entry point
-│   ├── worker.ts             # Background worker entry point (crawl, batch scrape, extract, agent)
-│   ├── api/
-│   │   ├── server.ts         # Fastify app setup
-│   │   ├── middleware/
-│   │   │   └── auth.ts       # API key authentication
-│   │   └── routes/
-│   │       ├── scrape.ts     # POST /scrape
-│   │       ├── crawl.ts      # POST /crawl, GET /crawl/:id, DELETE /crawl/:id
-│   │       ├── map.ts        # POST /map
-│   │       ├── batchScrape.ts # POST /batch_scrape, GET/DELETE /batch_scrape/:id
-│   │       ├── search.ts     # POST /search
-│   │       ├── interact.ts   # POST /interact
-│   │       ├── extract.ts    # POST /extract, GET/DELETE /extract/:id
-│   │       └── agent.ts      # POST /agent, GET/DELETE /agent/:id
-│   ├── services/
-│   │   ├── scrape/
-│   │   │   ├── index.ts      # Main scrape logic (HTTP + browser fallback, retry)
-│   │   │   ├── browser.ts    # Playwright browser management, sessions, screenshots
-│   │   │   ├── content.ts    # HTML to markdown, metadata, branding, link extraction
-│   │   │   └── actions.ts    # Page interaction actions (click, scroll, write, etc.)
-│   │   ├── crawl/
-│   │   │   └── index.ts      # Crawl engine (URL discovery, robots.txt with caching)
-│   │   ├── map/
-│   │   │   └── index.ts      # URL discovery via sitemap + links
-│   │   ├── search/
-│   │   │   └── index.ts      # Web search (DuckDuckGo / SearXNG)
-│   │   ├── interact/
-│   │   │   └── index.ts      # Browser session interaction
-│   │   ├── extract/
-│   │   │   └── index.ts      # Multi-page structured extraction
-│   │   └── agent/
-│   │       └── index.ts      # Prompt-driven research agent
-│   ├── queue/
-│   │   ├── crawlQueue.ts     # BullMQ crawl queue
-│   │   ├── batchScrapeQueue.ts # BullMQ batch scrape queue
-│   │   ├── extractQueue.ts   # BullMQ extract queue
-│   │   └── agentQueue.ts     # BullMQ agent queue
-│   ├── database/
-│   │   └── redis.ts          # Redis connection
-│   ├── config/
-│   │   └── index.ts          # Environment configuration
-│   └── utils/
-│       ├── types.ts          # TypeScript interfaces
-│       ├── logger.ts         # Winston logger
-│       └── webhook.ts        # Webhook notification utility
-├── tests/
-│   └── services/
-│       ├── content.test.ts   # Content processing tests
-│       └── crawl.test.ts     # Crawl utility tests
-├── docker-compose.yml
-├── Dockerfile
-├── .env.example
-├── package.json
-├── tsconfig.json
-├── jest.config.js
-├── LICENSE
-└── README.md
+Spectra/
++-- src/
+�   +-- index.ts              # API server entry point
+�   +-- worker.ts             # Background worker entry point (crawl, batch scrape, extract, agent)
+�   +-- api/
+�   �   +-- server.ts         # Fastify app setup
+�   �   +-- middleware/
+�   �   �   +-- auth.ts       # API key authentication
+�   �   +-- routes/
+�   �       +-- scrape.ts     # POST /scrape
+�   �       +-- crawl.ts      # POST /crawl, GET /crawl/:id, DELETE /crawl/:id
+�   �       +-- map.ts        # POST /map
+�   �       +-- batchScrape.ts # POST /batch_scrape, GET/DELETE /batch_scrape/:id
+�   �       +-- search.ts     # POST /search
+�   �       +-- interact.ts   # POST /interact
+�   �       +-- extract.ts    # POST /extract, GET/DELETE /extract/:id
+�   �       +-- agent.ts      # POST /agent, GET/DELETE /agent/:id
+�   +-- services/
+�   �   +-- scrape/
+�   �   �   +-- index.ts      # Main scrape logic (HTTP + browser fallback, retry)
+�   �   �   +-- browser.ts    # Playwright browser management, sessions, screenshots
+�   �   �   +-- content.ts    # HTML to markdown, metadata, branding, link extraction
+�   �   �   +-- actions.ts    # Page interaction actions (click, scroll, write, etc.)
+�   �   +-- crawl/
+�   �   �   +-- index.ts      # Crawl engine (URL discovery, robots.txt with caching)
+�   �   +-- map/
+�   �   �   +-- index.ts      # URL discovery via sitemap + links
+�   �   +-- search/
+�   �   �   +-- index.ts      # Web search (DuckDuckGo / SearXNG)
+�   �   +-- interact/
+�   �   �   +-- index.ts      # Browser session interaction
+�   �   +-- extract/
+�   �   �   +-- index.ts      # Multi-page structured extraction
+�   �   +-- agent/
+�   �       +-- index.ts      # Prompt-driven research agent
+�   +-- queue/
+�   �   +-- crawlQueue.ts     # BullMQ crawl queue
+�   �   +-- batchScrapeQueue.ts # BullMQ batch scrape queue
+�   �   +-- extractQueue.ts   # BullMQ extract queue
+�   �   +-- agentQueue.ts     # BullMQ agent queue
+�   +-- database/
+�   �   +-- redis.ts          # Redis connection
+�   +-- config/
+�   �   +-- index.ts          # Environment configuration
+�   +-- utils/
+�       +-- types.ts          # TypeScript interfaces
+�       +-- logger.ts         # Winston logger
+�       +-- webhook.ts        # Webhook notification utility
++-- tests/
+�   +-- services/
+�       +-- content.test.ts   # Content processing tests
+�       +-- crawl.test.ts     # Crawl utility tests
++-- docker-compose.yml
++-- Dockerfile
++-- .env.example
++-- package.json
++-- tsconfig.json
++-- jest.config.js
++-- LICENSE
++-- README.md
 ```
 
 ---
