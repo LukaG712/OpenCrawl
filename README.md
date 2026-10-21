@@ -1,6 +1,24 @@
+﻿```
+    ___           _         ____  ____  _
+   /   \  __ _ __| | __    / ___||  _ \|_| __ _ _ __  __ _ _ __ __ _ _ __
+  / /\ \ / _` |  _ \ \ /\ / / _ \| |_) | |/ _` | '__|/ _` | '__/ _` | '_ \
+ / ____ | (_| | |_) \ V  V / (_) |  __/| | (_| | |  | (_| | | | (_| | | | |
+/_/    \_\__,_|_.__/ \_/\_/\___/|_|   |_| \__,_|_|   \__,_|_|  \__,_|_| |_|
+```
+
 # OpenCrawl
 
-OpenCrawl is a self-hosted, open-source web scraping and crawling API that turns websites into clean, LLM-ready data. It provides a REST API with endpoints for scraping single pages, recursively crawling sites, and discovering URLs — all returning clean markdown, HTML, and structured metadata.
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue.svg)](https://www.typescriptlang.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg)](https://nodejs.org/)
+[![Docker](https://img.shields.io/badge/Docker-ready-blue.svg)](https://www.docker.com/)
+[![API](https://img.shields.io/badge/API-REST-orange.svg)](https://restfulapi.net/)
+
+A self-hosted, open-source web scraping and crawling API that turns websites into clean, LLM-ready data.
+
+Scrape single pages, recursively crawl entire sites, and discover URLs - all returning clean markdown, HTML, and structured metadata. Think of it as your own private, fully controllable scraping infrastructure.
+
+---
 
 ## Tech Stack
 
@@ -14,18 +32,22 @@ OpenCrawl is a self-hosted, open-source web scraping and crawling API that turns
 | Markdown | Turndown | Reliable HTML-to-markdown conversion |
 | Container | Docker + Compose | Single-command deployment |
 
+---
+
 ## Features
 
-- **Scrape** — Fetch a single URL and return clean markdown, HTML, links, and metadata
-- **Crawl** — Recursively discover and scrape subpages as an async job with polling
-- **Map** — Quickly discover URLs on a site via sitemaps and link extraction
-- **JavaScript rendering** — Headless browser fallback for SPA/JS-heavy pages
-- **Content cleaning** — Strip navigation, ads, footers, and boilerplate
-- **robots.txt respect** — Crawler honors robots.txt rules
-- **URL deduplication** — Avoids scraping the same page twice
-- **Configurable limits** — Depth, page count, include/exclude path patterns
-- **API key authentication** — Bearer token auth on all endpoints
-- **Rate limiting** — Per-key rate limiting to protect the service
+- **Scrape** - Fetch a single URL and return clean markdown, HTML, links, and metadata
+- **Crawl** - Recursively discover and scrape subpages as an async job with polling
+- **Map** - Quickly discover URLs on a site via sitemaps and link extraction
+- **JavaScript rendering** - Headless browser fallback for SPA/JS-heavy pages
+- **Content cleaning** - Strip navigation, ads, footers, and boilerplate
+- **robots.txt respect** - Crawler honors robots.txt rules
+- **URL deduplication** - Avoids scraping the same page twice
+- **Configurable limits** - Depth, page count, include/exclude path patterns
+- **API key authentication** - Bearer token auth on all endpoints
+- **Rate limiting** - Per-key rate limiting to protect the service
+
+---
 
 ## Quick Start
 
@@ -37,8 +59,8 @@ OpenCrawl is a self-hosted, open-source web scraping and crawling API that turns
 
 ```bash
 # Clone the repository
-git clone <repo-url>
-cd opencrawl
+git clone https://github.com/LukaG712/OpenCrawl.git
+cd OpenCrawl
 
 # Copy environment file
 cp .env.example .env
@@ -70,6 +92,8 @@ npm run dev
 # In another terminal, start the worker
 npm run dev:worker
 ```
+
+---
 
 ## API Reference
 
@@ -109,15 +133,15 @@ POST /scrape
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
-| `url` | string | — | The URL to scrape (required) |
+| `url` | string | _(required)_ | The URL to scrape |
 | `formats` | string[] | `["markdown"]` | Output formats: `markdown`, `html`, `links` |
 | `onlyMainContent` | boolean | `true` | Strip nav, footer, sidebar, etc. |
 | `onlyCleanContent` | boolean | `false` | More aggressive content cleaning |
-| `includeTags` | string[] | — | Only keep these HTML tags |
-| `excludeTags` | string[] | — | Remove these HTML tags |
+| `includeTags` | string[] | _(none)_ | Only keep these HTML tags |
+| `excludeTags` | string[] | _(none)_ | Remove these HTML tags |
 | `waitFor` | number | `0` | Milliseconds to wait after page load |
 | `timeout` | number | `30000` | Request timeout in milliseconds |
-| `headers` | object | — | Custom HTTP headers |
+| `headers` | object | _(none)_ | Custom HTTP headers |
 | `blockAds` | boolean | `true` | Block ad-related requests |
 
 **Response:**
@@ -179,9 +203,9 @@ POST /crawl
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
-| `url` | string | — | Starting URL (required) |
-| `excludePaths` | string[] | — | URL path patterns to exclude |
-| `includePaths` | string[] | — | Only crawl matching paths |
+| `url` | string | _(required)_ | Starting URL |
+| `excludePaths` | string[] | _(none)_ | URL path patterns to exclude |
+| `includePaths` | string[] | _(none)_ | Only crawl matching paths |
 | `maxDiscoveryDepth` | number | `10` | Maximum crawl depth |
 | `limit` | number | `100` | Maximum pages to scrape |
 | `ignoreQueryParameters` | boolean | `false` | Treat URLs with different query params as same |
@@ -190,7 +214,7 @@ POST /crawl
 | `allowSubdomains` | boolean | `false` | Include subdomains |
 | `delay` | number | `1000` | Delay between requests (ms) |
 | `maxConcurrency` | number | `5` | Concurrent scrape operations |
-| `scrapeOptions` | object | — | Options passed to each scrape |
+| `scrapeOptions` | object | _(none)_ | Options passed to each scrape |
 
 **Response:**
 
@@ -270,7 +294,7 @@ POST /map
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
-| `url` | string | — | The website URL (required) |
+| `url` | string | _(required)_ | The website URL |
 | `ignoreSitemap` | boolean | `false` | Skip sitemap.xml parsing |
 | `limit` | number | `1000` | Maximum URLs to return |
 
@@ -287,6 +311,8 @@ POST /map
 }
 ```
 
+---
+
 ## Error Responses
 
 All errors follow a consistent format:
@@ -302,9 +328,11 @@ All errors follow a consistent format:
 |-------------|---------|
 | 400 | Bad request (missing/invalid parameters) |
 | 401 | Unauthorized (missing or invalid API key) |
-| 404 | Not found (job ID doesn't exist) |
+| 404 | Not found (job ID does not exist) |
 | 429 | Rate limit exceeded |
 | 500 | Internal server error |
+
+---
 
 ## Configuration
 
@@ -329,6 +357,8 @@ All configuration is via environment variables. See `.env.example` for all optio
 | `BROWSER_HEADLESS` | `true` | Run browser in headless mode |
 | `LOG_LEVEL` | `info` | Log level (debug, info, warn, error) |
 
+---
+
 ## Architecture
 
 ```
@@ -352,11 +382,13 @@ All configuration is via environment variables. See `.env.example` for all optio
                     └──────────────┘
 ```
 
-1. **API Server** — Handles HTTP requests, authentication, rate limiting, and synchronous operations (scrape, map)
-2. **Worker** — Processes async crawl jobs from the Redis queue
-3. **Redis** — Job queue (BullMQ) for crawl tasks and progress tracking
-4. **Playwright** — Headless browser for JavaScript-rendered pages
-5. **Content Processing** — Cheerio for HTML parsing, Turndown for markdown conversion
+1. **API Server** - Handles HTTP requests, authentication, rate limiting, and synchronous operations (scrape, map)
+2. **Worker** - Processes async crawl jobs from the Redis queue
+3. **Redis** - Job queue (BullMQ) for crawl tasks and progress tracking
+4. **Playwright** - Headless browser for JavaScript-rendered pages
+5. **Content Processing** - Cheerio for HTML parsing, Turndown for markdown conversion
+
+---
 
 ## Project Structure
 
@@ -377,7 +409,7 @@ opencrawl/
 │   │   ├── scrape/
 │   │   │   ├── index.ts      # Main scrape logic (HTTP + browser fallback)
 │   │   │   ├── browser.ts    # Playwright browser management
-│   │   │   └── content.ts    # HTML → markdown, metadata, link extraction
+│   │   │   └── content.ts    # HTML to markdown, metadata, link extraction
 │   │   ├── crawl/
 │   │   │   └── index.ts      # Crawl engine (URL discovery, robots.txt, dedup)
 │   │   └── map/
@@ -405,15 +437,21 @@ opencrawl/
 └── README.md
 ```
 
+---
+
 ## Running Tests
 
 ```bash
 npm test
 ```
 
+---
+
 ## License
 
-MIT — see [LICENSE](LICENSE) for details.
+MIT - see [LICENSE](LICENSE) for details.
+
+---
 
 ## Contributing
 
