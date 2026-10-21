@@ -1,5 +1,6 @@
 import https from 'https';
 import http from 'http';
+import zlib from 'zlib';
 import { ScrapeOptions, ScrapeResult, ScrapeData, ScrapeMetadata, ScrapeFormat, JsonFormatOptions, Action } from '../../utils/types';
 import { htmlToMarkdown, extractMetadata, extractLinks, cleanHtml, extractBranding } from './content';
 import { scrapeWithBrowser } from './browser';
@@ -65,11 +66,27 @@ function fetchHtml(
                 respHeaders[key] = value;
               }
             }
-            response.on('data', (chunk: Buffer) => chunks.push(chunk));
-            response.on('end', () => {
-              const html = Buffer.concat(chunks).toString('utf-8');
-              res({ html, statusCode: response.statusCode || 200, headers: respHeaders });
-            });
+            const encoding = response.headers['content-encoding'];
+            const decompress = encoding === 'gzip' ? zlib.createGunzip() :
+                               encoding === 'br' ? zlib.createBrotliDecompress() :
+                               encoding === 'deflate' ? zlib.createInflate() : null;
+            if (decompress) {
+              response.pipe(decompress);
+              decompress.on('data', (chunk: Buffer) => chunks.push(chunk));
+              decompress.on('end', () => {
+                const html = Buffer.concat(chunks).toString('utf-8');
+                res({ html, statusCode: response.statusCode || 200, headers: respHeaders });
+              });
+              decompress.on('error', (err) => {
+                rej(new Error(`Decompression failed: ${err.message}`));
+              });
+            } else {
+              response.on('data', (chunk: Buffer) => chunks.push(chunk));
+              response.on('end', () => {
+                const html = Buffer.concat(chunks).toString('utf-8');
+                res({ html, statusCode: response.statusCode || 200, headers: respHeaders });
+              });
+            }
           });
 
           req.on('error', (err) => {
