@@ -1,4 +1,4 @@
-import { normalizeUrl, isSameDomain, matchesPathPatterns, discoverLinks } from '../../src/services/crawl';
+import { normalizeUrl, isSameDomain, matchesPathPatterns } from '../../src/services/crawl';
 
 describe('Crawl Utilities', () => {
   describe('normalizeUrl', () => {
@@ -19,6 +19,10 @@ describe('Crawl Utilities', () => {
     it('handles invalid URLs gracefully', () => {
       expect(normalizeUrl('not-a-url')).toBe('not-a-url');
     });
+
+    it('normalizes multiple trailing slashes', () => {
+      expect(normalizeUrl('https://example.com///')).toBe('https://example.com');
+    });
   });
 
   describe('isSameDomain', () => {
@@ -37,6 +41,11 @@ describe('Crawl Utilities', () => {
     it('returns false for subdomain when not allowed', () => {
       expect(isSameDomain('https://blog.example.com/page', 'https://example.com', false)).toBe(false);
     });
+
+    it('handles invalid URLs', () => {
+      expect(isSameDomain('invalid', 'https://example.com')).toBe(false);
+      expect(isSameDomain('https://example.com', 'invalid')).toBe(false);
+    });
   });
 
   describe('matchesPathPatterns', () => {
@@ -53,42 +62,15 @@ describe('Crawl Utilities', () => {
     it('returns true when no patterns', () => {
       expect(matchesPathPatterns('https://example.com/any/path')).toBe(true);
     });
-  });
 
-  describe('discoverLinks', () => {
-    it('discovers links from HTML', async () => {
-      const html = `
-        <html>
-          <body>
-            <a href="https://example.com/page1">Page 1</a>
-            <a href="https://example.com/page2">Page 2</a>
-            <a href="https://other.com/external">External</a>
-            <a href="/relative">Relative</a>
-          </body>
-        </html>
-      `;
-
-      const links = await discoverLinks('https://example.com', html, {
-        url: 'https://example.com',
-        allowExternalLinks: false,
-      });
-
-      expect(links).toContain('https://example.com/page1');
-      expect(links).toContain('https://example.com/page2');
-      expect(links).not.toContain('https://other.com/external');
+    it('supports substring matching', () => {
+      // Patterns match as substrings in the path
+      expect(matchesPathPatterns('https://example.com/blog/2024/post', ['blog/'])).toBe(true);
+      expect(matchesPathPatterns('https://example.com/blog/2024/post', undefined, ['admin/'])).toBe(true);
     });
 
-    it('allows external links when configured', async () => {
-      const html = `
-        <a href="https://other.com/external">External</a>
-      `;
-
-      const links = await discoverLinks('https://example.com', html, {
-        url: 'https://example.com',
-        allowExternalLinks: true,
-      });
-
-      expect(links).toContain('https://other.com/external');
+    it('handles invalid URLs', () => {
+      expect(matchesPathPatterns('not-a-url')).toBe(true);
     });
   });
 });

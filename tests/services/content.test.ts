@@ -42,6 +42,26 @@ describe('Content Processing', () => {
       expect(md).not.toContain('<');
       expect(md).not.toContain('>');
     });
+
+    it('handles empty HTML', () => {
+      const md = htmlToMarkdown('');
+      expect(md).toBe('');
+    });
+
+    it('converts headings correctly', () => {
+      const html = '<h1>Heading 1</h1><h2>Heading 2</h2><h3>Heading 3</h3>';
+      const md = htmlToMarkdown(html);
+      expect(md).toContain('# Heading 1');
+      expect(md).toContain('## Heading 2');
+      expect(md).toContain('### Heading 3');
+    });
+
+    it('converts lists correctly', () => {
+      const html = '<ul><li>Item 1</li><li>Item 2</li></ul>';
+      const md = htmlToMarkdown(html);
+      expect(md).toContain('Item 1');
+      expect(md).toContain('Item 2');
+    });
   });
 
   describe('extractMetadata', () => {
@@ -63,6 +83,25 @@ describe('Content Processing', () => {
     it('sets source URL', () => {
       const meta = extractMetadata(sampleHtml, 'https://example.com');
       expect(meta.sourceURL).toBe('https://example.com');
+    });
+
+    it('extracts Open Graph metadata', () => {
+      const meta = extractMetadata(sampleHtml, 'https://example.com');
+      expect(meta.ogTitle).toBe('OG Test Page');
+      expect(meta.ogDescription).toBe('OG description');
+    });
+
+    it('handles missing metadata gracefully', () => {
+      const minimalHtml = '<html><body><p>No metadata</p></body></html>';
+      const meta = extractMetadata(minimalHtml, 'https://example.com');
+      expect(meta.title).toBe('');
+      expect(meta.description).toBe('');
+      expect(meta.language).toBe('');
+    });
+
+    it('extracts page size', () => {
+      const meta = extractMetadata(sampleHtml, 'https://example.com');
+      expect(meta.pageSize).toBeGreaterThan(0);
     });
   });
 
@@ -87,6 +126,11 @@ describe('Content Processing', () => {
       const count = links.filter((l) => l === 'https://example.com/link1').length;
       expect(count).toBe(1);
     });
+
+    it('returns empty array for no links', () => {
+      const links = extractLinks('<p>No links here</p>', 'https://example.com');
+      expect(links).toEqual([]);
+    });
   });
 
   describe('cleanHtml', () => {
@@ -107,6 +151,11 @@ describe('Content Processing', () => {
       const cleaned = cleanHtml(sampleHtml, {});
       expect(cleaned).toContain('<nav');
       expect(cleaned).toContain('<footer');
+    });
+
+    it('handles empty HTML', () => {
+      const cleaned = cleanHtml('', {});
+      expect(cleaned).toBeDefined();
     });
   });
 });
