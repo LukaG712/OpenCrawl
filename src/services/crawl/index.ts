@@ -219,7 +219,7 @@ export async function crawl(
     // Check robots.txt
     if (robots && !ignoreRobotsTxt) {
       try {
-        if (!robots.isAllowed(entry.url, 'SpectraBot')) {
+        if (!robots.isAllowed(entry.url, 'TrapperBot')) {
           logger.info(`Blocked by robots.txt: ${entry.url}`);
           continue;
         }

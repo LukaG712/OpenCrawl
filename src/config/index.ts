@@ -6,7 +6,7 @@ const config = {
   host: process.env.HOST || '0.0.0.0',
 
   // API Key
-  apiKey: process.env.API_KEY || 'Spectra-dev-key-change-me',
+  apiKey: process.env.API_KEY || 'Trapper-dev-key-change-me',
 
   // Redis
   redis: {

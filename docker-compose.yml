@@ -21,7 +21,7 @@ services:
     environment:
       - PORT=3000
       - HOST=0.0.0.0
-      - API_KEY=${API_KEY:-Spectra-dev-key-change-me}
+      - API_KEY=${API_KEY:-Trapper-dev-key-change-me}
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - RATE_LIMIT_MAX=60
@@ -46,7 +46,7 @@ services:
     environment:
       - PORT=3000
       - HOST=0.0.0.0
-      - API_KEY=${API_KEY:-Spectra-dev-key-change-me}
+      - API_KEY=${API_KEY:-Trapper-dev-key-change-me}
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - SCRAPE_TIMEOUT=30000

@@ -89,7 +89,7 @@ describe('Server API', () => {
       const response = await server.inject({
         method: 'POST',
         url: '/scrape',
-        headers: { authorization: 'Bearer Spectra-dev-key-change-me' },
+        headers: { authorization: 'Bearer Trapper-dev-key-change-me' },
         payload: { url: 'not-a-url' },
       });
 
@@ -100,7 +100,7 @@ describe('Server API', () => {
     it('accepts requests with api-key query param', async () => {
       const response = await server.inject({
         method: 'POST',
-        url: '/scrape?api-key=Spectra-dev-key-change-me',
+        url: '/scrape?api-key=Trapper-dev-key-change-me',
         payload: { url: 'not-a-url' },
       });
 
@@ -109,7 +109,7 @@ describe('Server API', () => {
   });
 
   describe('Scrape Route Validation', () => {
-    const validKey = 'Spectra-dev-key-change-me';
+    const validKey = 'Trapper-dev-key-change-me';
 
     it('rejects missing URL', async () => {
       const response = await server.inject({
@@ -139,7 +139,7 @@ describe('Server API', () => {
   });
 
   describe('Search Route Validation', () => {
-    const validKey = 'Spectra-dev-key-change-me';
+    const validKey = 'Trapper-dev-key-change-me';
 
     it('rejects missing query', async () => {
       const response = await server.inject({
@@ -156,7 +156,7 @@ describe('Server API', () => {
   });
 
   describe('Map Route Validation', () => {
-    const validKey = 'Spectra-dev-key-change-me';
+    const validKey = 'Trapper-dev-key-change-me';
 
     it('rejects missing URL', async () => {
       const response = await server.inject({

@@ -1,5 +1,5 @@
 {
-  "name": "Spectra",
+  "name": "Trapper",
   "version": "2.0.0",
   "description": "Open-source web scraping and crawling API that turns websites into clean, LLM-ready data",
   "main": "dist/index.js",

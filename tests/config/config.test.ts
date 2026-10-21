@@ -11,7 +11,7 @@ describe('Configuration', () => {
     });
 
     it('has default API key', () => {
-      expect(config.apiKey).toBe('Spectra-dev-key-change-me');
+      expect(config.apiKey).toBe('Trapper-dev-key-change-me');
     });
 
     it('has correct default Redis settings', () => {

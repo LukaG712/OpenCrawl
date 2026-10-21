@@ -74,8 +74,8 @@ Scrape single pages, recursively crawl entire sites, and discover URLs - all ret
 
 ```bash
 # Clone the repository
-git clone https://github.com/LukaG712/Spectra.git
-cd Spectra
+git clone https://github.com/LukaG712/Trapper.git
+cd Trapper
 
 # Copy environment file
 cp .env.example .env
@@ -247,7 +247,7 @@ Requires `LLM_PROVIDER=openai` and `OPENAI_API_KEY` to be set.
 
 ```bash
 curl -X POST http://localhost:3000/scrape \
-  -H "Authorization: Bearer Spectra-dev-key-change-me" \
+  -H "Authorization: Bearer Trapper-dev-key-change-me" \
   -H "Content-Type: application/json" \
   -d '{"url": "https://example.com", "formats": ["markdown", "html"]}'
 ```
@@ -691,7 +691,7 @@ All configuration is via environment variables. See `.env.example` for all optio
 |----------|---------|-------------|
 | `PORT` | `3000` | API server port |
 | `HOST` | `0.0.0.0` | Bind address |
-| `API_KEY` | `Spectra-dev-key-change-me` | API authentication key |
+| `API_KEY` | `Trapper-dev-key-change-me` | API authentication key |
 | `REDIS_HOST` | `localhost` | Redis host |
 | `REDIS_PORT` | `6379` | Redis port |
 | `RATE_LIMIT_MAX` | `60` | Max requests per window |
@@ -748,7 +748,7 @@ All configuration is via environment variables. See `.env.example` for all optio
 ## Project Structure
 
 ```
-Spectra/
+Trapper/
 +-- src/
 �   +-- index.ts              # API server entry point
 �   +-- worker.ts             # Background worker entry point (crawl, batch scrape, extract, agent)
