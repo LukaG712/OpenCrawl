@@ -1,6 +1,14 @@
+export interface JsonFormatOptions {
+  type: 'json';
+  schema?: Record<string, unknown>;
+  prompt?: string;
+}
+
+export type ScrapeFormat = 'markdown' | 'html' | 'links' | 'screenshot' | 'raw' | 'branded' | JsonFormatOptions;
+
 export interface ScrapeOptions {
   url: string;
-  formats?: ('markdown' | 'html' | 'links' | 'screenshot')[];
+  formats?: ScrapeFormat[];
   onlyMainContent?: boolean;
   onlyCleanContent?: boolean;
   includeTags?: string[];
@@ -11,6 +19,17 @@ export interface ScrapeOptions {
   skipTlsVerification?: boolean;
   blockAds?: boolean;
   removeBase64Images?: boolean;
+  mobile?: boolean;
+  parsePDF?: boolean;
+  skipBackupAgents?: boolean;
+}
+
+export interface ExtractOptions {
+  url: string;
+  schema?: Record<string, unknown>;
+  prompt?: string;
+  allowExternalLinks?: boolean;
+  includeSubdomains?: boolean;
 }
 
 export interface ScrapeResult {
@@ -22,9 +41,19 @@ export interface ScrapeResult {
 export interface ScrapeData {
   markdown?: string;
   html?: string;
+  raw?: string;
   links?: string[];
   screenshot?: string;
+  branded?: BrandedData;
+  json?: Record<string, unknown>;
   metadata: ScrapeMetadata;
+}
+
+export interface BrandedData {
+  colors?: string[];
+  fonts?: string[];
+  logo?: string;
+  theme?: string;
 }
 
 export interface ScrapeMetadata {
@@ -35,6 +64,24 @@ export interface ScrapeMetadata {
   statusCode?: number;
   scrapeId?: string;
   createdAt?: string;
+  ogTitle?: string;
+  ogDescription?: string;
+  ogImage?: string;
+  ogUrl?: string;
+  twitterTitle?: string;
+  twitterDescription?: string;
+  twitterImage?: string;
+  twitterCard?: string;
+  canonicalUrl?: string;
+  robots?: string;
+  contentType?: string;
+  pageSize?: number;
+  favicon?: string;
+  keywords?: string;
+  author?: string;
+  publishedTime?: string;
+  modifiedTime?: string;
+  dns?: string[];
 }
 
 export interface CrawlOptions {
@@ -51,8 +98,9 @@ export interface CrawlOptions {
   ignoreRobotsTxt?: boolean;
   delay?: number;
   maxConcurrency?: number;
+  webhook?: string;
   scrapeOptions?: {
-    formats?: ('markdown' | 'html' | 'links' | 'screenshot')[];
+    formats?: ScrapeFormat[];
     onlyMainContent?: boolean;
     onlyCleanContent?: boolean;
     includeTags?: string[];
@@ -73,6 +121,7 @@ export interface CrawlJob {
   nextPollMs?: number;
   createdAt: string;
   completedAt?: string;
+  webhook?: string;
 }
 
 export interface CrawlResult {
@@ -108,4 +157,63 @@ export interface MapLink {
   url: string;
   title?: string;
   description?: string;
+}
+
+// Batch Scrape types
+export interface BatchScrapeOptions {
+  urls: string[];
+  scrapeOptions?: {
+    formats?: ScrapeFormat[];
+    onlyMainContent?: boolean;
+    onlyCleanContent?: boolean;
+    includeTags?: string[];
+    excludeTags?: string[];
+    waitFor?: number;
+    timeout?: number;
+  };
+  webhook?: string;
+}
+
+export interface BatchScrapeJob {
+  jobId: string;
+  status: 'scraping' | 'completed' | 'failed';
+  totalUrls: number;
+  scrapedUrls: number;
+  options: BatchScrapeOptions;
+  results: BatchScrapeResult[];
+  errors?: CrawlError[];
+  createdAt: string;
+  completedAt?: string;
+  webhook?: string;
+}
+
+export interface BatchScrapeResult {
+  success: boolean;
+  url?: string;
+  data?: ScrapeData;
+  error?: string;
+  metadata?: ScrapeMetadata;
+}
+
+// Search types
+export interface SearchOptions {
+  query: string;
+  limit?: number;
+  scrapeOptions?: {
+    formats?: ScrapeFormat[];
+    onlyMainContent?: boolean;
+  };
+}
+
+export interface SearchResult {
+  url: string;
+  title: string;
+  description: string;
+  data?: ScrapeData;
+}
+
+export interface SearchResponse {
+  success: boolean;
+  data?: SearchResult[];
+  error?: string;
 }

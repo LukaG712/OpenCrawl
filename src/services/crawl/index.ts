@@ -10,6 +10,10 @@ export interface CrawlUrlEntry {
   depth: number;
 }
 
+// Robots.txt cache
+const robotsCache = new Map<string, { parser: any; expiry: number }>();
+const ROBOTS_CACHE_TTL = 3600000; // 1 hour
+
 export function normalizeUrl(url: string, ignoreQueryParams: boolean = false): string {
   try {
     const parsed = new URL(url);
@@ -84,6 +88,15 @@ export function matchesPathPatterns(
 
 export async function fetchRobotsTxt(baseUrl: string): Promise<any | null> {
   try {
+    const parsedUrl = new URL(baseUrl);
+    const domainKey = parsedUrl.origin;
+
+    // Check cache
+    const cached = robotsCache.get(domainKey);
+    if (cached && cached.expiry > Date.now()) {
+      return cached.parser;
+    }
+
     const robotsUrl = new URL('/robots.txt', baseUrl);
     const response = await fetch(robotsUrl.toString(), {
       signal: AbortSignal.timeout(5000),
@@ -93,6 +106,13 @@ export async function fetchRobotsTxt(baseUrl: string): Promise<any | null> {
 
     const text = await response.text();
     const robot = robotsParser(robotsUrl.toString(), text);
+
+    // Cache the result
+    robotsCache.set(domainKey, {
+      parser: robot,
+      expiry: Date.now() + ROBOTS_CACHE_TTL,
+    });
+
     return robot;
   } catch {
     logger.warn(`Could not fetch robots.txt for ${baseUrl}`);
@@ -116,6 +136,9 @@ export async function discoverLinks(
     try {
       const resolved = new URL(href, baseUrl);
       if (!resolved.protocol.startsWith('http')) return;
+
+      // Skip anchor-only links
+      if (resolved.hash && resolved.pathname === baseUrl.split('/').slice(0, 3).join('/') + '/') return;
 
       const resolvedStr = resolved.toString();
 
@@ -196,7 +219,6 @@ export async function crawl(
     // Check robots.txt
     if (robots && !ignoreRobotsTxt) {
       try {
-        const parsed = new URL(entry.url);
         if (!robots.isAllowed(entry.url, 'OpenCrawlBot')) {
           logger.info(`Blocked by robots.txt: ${entry.url}`);
           continue;
@@ -237,13 +259,20 @@ export async function crawl(
         onProgress?.(crawlResult);
 
         // Discover new links if within depth limit
-        if (entry.depth < maxDiscoveryDepth && result.data.html) {
-          const newLinks = await discoverLinks(entry.url, result.data.html, options);
+        if (entry.depth < maxDiscoveryDepth) {
+          // Try to get HTML for link discovery - use raw HTML if available
+          const htmlToSearch = result.data.html || result.data.markdown
+            ? (result.data.html || '')
+            : '';
 
-          for (const link of newLinks) {
-            const linkNormalized = normalizeUrl(link, options.ignoreQueryParameters);
-            if (!visited.has(linkNormalized) && queue.length < limit * 2) {
-              queue.push({ url: linkNormalized, depth: entry.depth + 1 });
+          if (htmlToSearch) {
+            const newLinks = await discoverLinks(entry.url, htmlToSearch, options);
+
+            for (const link of newLinks) {
+              const linkNormalized = normalizeUrl(link, options.ignoreQueryParameters);
+              if (!visited.has(linkNormalized) && queue.length < limit * 2) {
+                queue.push({ url: linkNormalized, depth: entry.depth + 1 });
+              }
             }
           }
         }

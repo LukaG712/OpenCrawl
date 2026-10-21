@@ -43,6 +43,17 @@ const config = {
     launchTimeout: parseInt(process.env.BROWSER_LAUNCH_TIMEOUT || '30000', 10),
   },
 
+  // LLM (for JSON extraction)
+  llm: {
+    provider: process.env.LLM_PROVIDER || '',
+  },
+
+  // Search
+  search: {
+    provider: process.env.SEARCH_PROVIDER || 'google',
+    searxngUrl: process.env.SEARXNG_URL || '',
+  },
+
   // Logging
   logLevel: process.env.LOG_LEVEL || 'info',
 };

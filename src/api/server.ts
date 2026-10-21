@@ -5,6 +5,8 @@ import { apiKeyAuth } from './middleware/auth';
 import { registerScrapeRoutes } from './routes/scrape';
 import { registerCrawlRoutes } from './routes/crawl';
 import { registerMapRoutes } from './routes/map';
+import { registerBatchScrapeRoutes } from './routes/batchScrape';
+import { registerSearchRoutes } from './routes/search';
 import config from '../config';
 import logger from '../utils/logger';
 
@@ -43,6 +45,8 @@ async function bootstrap() {
   registerScrapeRoutes(app);
   registerCrawlRoutes(app);
   registerMapRoutes(app);
+  registerBatchScrapeRoutes(app);
+  registerSearchRoutes(app);
 
   // Error handler
   app.setErrorHandler((error, request, reply) => {
