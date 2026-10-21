@@ -1,11 +1,19 @@
 ```
- ::::::::  :::::::::  :::::::::: ::::    :::  ::::::::  :::::::::      :::     :::       ::: :::        
-:+:    :+: :+:    :+: :+:        :+:+:   :+: :+:    :+: :+:    :+:   :+: :+:   :+:       :+: :+:        
-+:+    +:+ +:+    +:+ +:+        :+:+:+  +:+ +:+        +:+    +:+  +:+   +:+  +:+       +:+ +:+        
-+#+    +:+ +#++:++#+  +#++:++#   +#+ +:+ +#+ +#+        +#++:++#:  +#++:++#++: +#+  +:+  +#+ +#+        
-+#+    +#+ +#+        +#+        +#+  +#+#+# +#+        +#+    +#+ +#+     +#+ +#+ +#+#+ +#+ +#+        
-#+#    #+# #+#        #+#        #+#   #+#+# #+#    #+# #+#    #+# #+#     #+#  #+#+# #+#+#  #+#        
- ########  ###        ########## ###    ####  ########  ###    ### ###     ###   ###   ###   ########## 
+       ...                                                 s                             
+   .x888888hx    :                                        :8                             
+  d88888888888hxx   .d``                                 .88       .u    .               
+ 8" ... `"*8888%`   @8Ne.   .u        .u          .     :888ooo  .d88B :@8c        u     
+!  "   ` .xnxx.     %8888:u@88N    ud8888.   .udR88N  -*8888888 ="8888f8888r    us888u.  
+X X   .H8888888%:    `888I  888. :888'8888. <888'888k   8888      4888>'88"  .@88 "8888" 
+X 'hn8888888*"   >    888I  888I d888 '88%" 9888 'Y"    8888      4888> '    9888  9888  
+X: `*88888%`     !    888I  888I 8888.+"    9888        8888      4888>      9888  9888  
+'8h.. ``     ..x8>  uW888L  888' 8888L      9888       .8888Lu=  .d888L .+   9888  9888  
+ `88888888888888f  '*88888Nu88P  '8888c. .+ ?8888u../  ^%888*    ^"8888*"    9888  9888  
+  '%8888888888*"   ~ '88888F`     "88888%    "8888P'     'Y"        "Y"      "888*""888" 
+     ^"****""`        888 ^         "YP'       "P'                            ^Y"   ^Y'  
+                      *8E                                                                
+                      '8>                                                                
+                       "                                                                 
 ```
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -718,22 +726,22 @@ All configuration is via environment variables. See `.env.example` for all optio
 
 ```
 +-------------+     +--------------+     +-------------+
-¦   Client    ¦----?¦  API Server  ¦----?¦    Redis    ¦
-¦  (curl/SDK) ¦?----¦  (Fastify)   ¦?----¦   (BullMQ)  ¦
+ï¿½   Client    ï¿½----?ï¿½  API Server  ï¿½----?ï¿½    Redis    ï¿½
+ï¿½  (curl/SDK) ï¿½?----ï¿½  (Fastify)   ï¿½?----ï¿½   (BullMQ)  ï¿½
 +-------------+     +--------------+     +-------------+
-                           ¦
-                           ¦ queues crawl jobs
+                           ï¿½
+                           ï¿½ queues crawl jobs
                            ?
                     +--------------+     +--------------+
-                    ¦   Worker     ¦----?¦  Playwright  ¦
-                    ¦  (BullMQ)    ¦     ¦  (Chromium)  ¦
+                    ï¿½   Worker     ï¿½----?ï¿½  Playwright  ï¿½
+                    ï¿½  (BullMQ)    ï¿½     ï¿½  (Chromium)  ï¿½
                     +--------------+     +--------------+
-                           ¦
+                           ï¿½
                            ?
                     +--------------+
-                    ¦ Content Proc ¦
-                    ¦ Cheerio +    ¦
-                    ¦   Turndown   ¦
+                    ï¿½ Content Proc ï¿½
+                    ï¿½ Cheerio +    ï¿½
+                    ï¿½   Turndown   ï¿½
                     +--------------+
 ```
 
@@ -750,56 +758,56 @@ All configuration is via environment variables. See `.env.example` for all optio
 ```
 Spectra/
 +-- src/
-¦   +-- index.ts              # API server entry point
-¦   +-- worker.ts             # Background worker entry point (crawl, batch scrape, extract, agent)
-¦   +-- api/
-¦   ¦   +-- server.ts         # Fastify app setup
-¦   ¦   +-- middleware/
-¦   ¦   ¦   +-- auth.ts       # API key authentication
-¦   ¦   +-- routes/
-¦   ¦       +-- scrape.ts     # POST /scrape
-¦   ¦       +-- crawl.ts      # POST /crawl, GET /crawl/:id, DELETE /crawl/:id
-¦   ¦       +-- map.ts        # POST /map
-¦   ¦       +-- batchScrape.ts # POST /batch_scrape, GET/DELETE /batch_scrape/:id
-¦   ¦       +-- search.ts     # POST /search
-¦   ¦       +-- interact.ts   # POST /interact
-¦   ¦       +-- extract.ts    # POST /extract, GET/DELETE /extract/:id
-¦   ¦       +-- agent.ts      # POST /agent, GET/DELETE /agent/:id
-¦   +-- services/
-¦   ¦   +-- scrape/
-¦   ¦   ¦   +-- index.ts      # Main scrape logic (HTTP + browser fallback, retry)
-¦   ¦   ¦   +-- browser.ts    # Playwright browser management, sessions, screenshots
-¦   ¦   ¦   +-- content.ts    # HTML to markdown, metadata, branding, link extraction
-¦   ¦   ¦   +-- actions.ts    # Page interaction actions (click, scroll, write, etc.)
-¦   ¦   +-- crawl/
-¦   ¦   ¦   +-- index.ts      # Crawl engine (URL discovery, robots.txt with caching)
-¦   ¦   +-- map/
-¦   ¦   ¦   +-- index.ts      # URL discovery via sitemap + links
-¦   ¦   +-- search/
-¦   ¦   ¦   +-- index.ts      # Web search (DuckDuckGo / SearXNG)
-¦   ¦   +-- interact/
-¦   ¦   ¦   +-- index.ts      # Browser session interaction
-¦   ¦   +-- extract/
-¦   ¦   ¦   +-- index.ts      # Multi-page structured extraction
-¦   ¦   +-- agent/
-¦   ¦       +-- index.ts      # Prompt-driven research agent
-¦   +-- queue/
-¦   ¦   +-- crawlQueue.ts     # BullMQ crawl queue
-¦   ¦   +-- batchScrapeQueue.ts # BullMQ batch scrape queue
-¦   ¦   +-- extractQueue.ts   # BullMQ extract queue
-¦   ¦   +-- agentQueue.ts     # BullMQ agent queue
-¦   +-- database/
-¦   ¦   +-- redis.ts          # Redis connection
-¦   +-- config/
-¦   ¦   +-- index.ts          # Environment configuration
-¦   +-- utils/
-¦       +-- types.ts          # TypeScript interfaces
-¦       +-- logger.ts         # Winston logger
-¦       +-- webhook.ts        # Webhook notification utility
+ï¿½   +-- index.ts              # API server entry point
+ï¿½   +-- worker.ts             # Background worker entry point (crawl, batch scrape, extract, agent)
+ï¿½   +-- api/
+ï¿½   ï¿½   +-- server.ts         # Fastify app setup
+ï¿½   ï¿½   +-- middleware/
+ï¿½   ï¿½   ï¿½   +-- auth.ts       # API key authentication
+ï¿½   ï¿½   +-- routes/
+ï¿½   ï¿½       +-- scrape.ts     # POST /scrape
+ï¿½   ï¿½       +-- crawl.ts      # POST /crawl, GET /crawl/:id, DELETE /crawl/:id
+ï¿½   ï¿½       +-- map.ts        # POST /map
+ï¿½   ï¿½       +-- batchScrape.ts # POST /batch_scrape, GET/DELETE /batch_scrape/:id
+ï¿½   ï¿½       +-- search.ts     # POST /search
+ï¿½   ï¿½       +-- interact.ts   # POST /interact
+ï¿½   ï¿½       +-- extract.ts    # POST /extract, GET/DELETE /extract/:id
+ï¿½   ï¿½       +-- agent.ts      # POST /agent, GET/DELETE /agent/:id
+ï¿½   +-- services/
+ï¿½   ï¿½   +-- scrape/
+ï¿½   ï¿½   ï¿½   +-- index.ts      # Main scrape logic (HTTP + browser fallback, retry)
+ï¿½   ï¿½   ï¿½   +-- browser.ts    # Playwright browser management, sessions, screenshots
+ï¿½   ï¿½   ï¿½   +-- content.ts    # HTML to markdown, metadata, branding, link extraction
+ï¿½   ï¿½   ï¿½   +-- actions.ts    # Page interaction actions (click, scroll, write, etc.)
+ï¿½   ï¿½   +-- crawl/
+ï¿½   ï¿½   ï¿½   +-- index.ts      # Crawl engine (URL discovery, robots.txt with caching)
+ï¿½   ï¿½   +-- map/
+ï¿½   ï¿½   ï¿½   +-- index.ts      # URL discovery via sitemap + links
+ï¿½   ï¿½   +-- search/
+ï¿½   ï¿½   ï¿½   +-- index.ts      # Web search (DuckDuckGo / SearXNG)
+ï¿½   ï¿½   +-- interact/
+ï¿½   ï¿½   ï¿½   +-- index.ts      # Browser session interaction
+ï¿½   ï¿½   +-- extract/
+ï¿½   ï¿½   ï¿½   +-- index.ts      # Multi-page structured extraction
+ï¿½   ï¿½   +-- agent/
+ï¿½   ï¿½       +-- index.ts      # Prompt-driven research agent
+ï¿½   +-- queue/
+ï¿½   ï¿½   +-- crawlQueue.ts     # BullMQ crawl queue
+ï¿½   ï¿½   +-- batchScrapeQueue.ts # BullMQ batch scrape queue
+ï¿½   ï¿½   +-- extractQueue.ts   # BullMQ extract queue
+ï¿½   ï¿½   +-- agentQueue.ts     # BullMQ agent queue
+ï¿½   +-- database/
+ï¿½   ï¿½   +-- redis.ts          # Redis connection
+ï¿½   +-- config/
+ï¿½   ï¿½   +-- index.ts          # Environment configuration
+ï¿½   +-- utils/
+ï¿½       +-- types.ts          # TypeScript interfaces
+ï¿½       +-- logger.ts         # Winston logger
+ï¿½       +-- webhook.ts        # Webhook notification utility
 +-- tests/
-¦   +-- services/
-¦       +-- content.test.ts   # Content processing tests
-¦       +-- crawl.test.ts     # Crawl utility tests
+ï¿½   +-- services/
+ï¿½       +-- content.test.ts   # Content processing tests
+ï¿½       +-- crawl.test.ts     # Crawl utility tests
 +-- docker-compose.yml
 +-- Dockerfile
 +-- .env.example
