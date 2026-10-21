@@ -4,7 +4,69 @@ export interface JsonFormatOptions {
   prompt?: string;
 }
 
-export type ScrapeFormat = 'markdown' | 'html' | 'links' | 'screenshot' | 'raw' | 'branded' | JsonFormatOptions;
+export type ScrapeFormat = 'markdown' | 'html' | 'links' | 'screenshot' | 'raw' | 'branded' | 'extract' | JsonFormatOptions;
+
+// Action types for page interaction
+export interface WaitAction {
+  type: 'wait';
+  milliseconds?: number;
+  selector?: string;
+}
+
+export interface ClickAction {
+  type: 'click';
+  selector: string;
+  all?: boolean;
+}
+
+export interface WriteAction {
+  type: 'write';
+  text: string;
+}
+
+export interface PressAction {
+  type: 'press';
+  key: string;
+}
+
+export interface ScrollAction {
+  type: 'scroll';
+  direction?: 'up' | 'down';
+  selector?: string;
+}
+
+export interface ScreenshotAction {
+  type: 'screenshot';
+  fullPage?: boolean;
+  quality?: number;
+}
+
+export interface ScrapeAction {
+  type: 'scrape';
+}
+
+export interface ExecuteJavascriptAction {
+  type: 'executeJavascript';
+  script: string;
+}
+
+export type Action =
+  | WaitAction
+  | ClickAction
+  | WriteAction
+  | PressAction
+  | ScrollAction
+  | ScreenshotAction
+  | ScrapeAction
+  | ExecuteJavascriptAction;
+
+export interface ActionResult {
+  actions?: {
+    screenshots?: string[];
+    scrapes?: string[];
+    javascriptReturns?: unknown[];
+  };
+}
 
 export interface ScrapeOptions {
   url: string;
@@ -22,14 +84,7 @@ export interface ScrapeOptions {
   mobile?: boolean;
   parsePDF?: boolean;
   skipBackupAgents?: boolean;
-}
-
-export interface ExtractOptions {
-  url: string;
-  schema?: Record<string, unknown>;
-  prompt?: string;
-  allowExternalLinks?: boolean;
-  includeSubdomains?: boolean;
+  actions?: Action[];
 }
 
 export interface ScrapeResult {
@@ -46,6 +101,11 @@ export interface ScrapeData {
   screenshot?: string;
   branded?: BrandedData;
   json?: Record<string, unknown>;
+  actions?: {
+    screenshots?: string[];
+    scrapes?: string[];
+    javascriptReturns?: unknown[];
+  };
   metadata: ScrapeMetadata;
 }
 
@@ -216,4 +276,59 @@ export interface SearchResponse {
   success: boolean;
   data?: SearchResult[];
   error?: string;
+}
+
+// Interact types
+export interface InteractOptions {
+  scrapeId?: string;
+  prompt?: string;
+  code?: string;
+  actions?: Action[];
+}
+
+export interface InteractResult {
+  success: boolean;
+  data?: ScrapeData;
+  error?: string;
+  scrapeId?: string;
+}
+
+// Extract types (multi-page structured extraction)
+export interface ExtractOptions {
+  urls?: string[];
+  prompt: string;
+  schema?: Record<string, unknown>;
+  allowExternalLinks?: boolean;
+  includeSubdomains?: boolean;
+}
+
+export interface ExtractJob {
+  jobId: string;
+  status: 'extracting' | 'completed' | 'failed';
+  options: ExtractOptions;
+  result?: Record<string, unknown>;
+  error?: string;
+  createdAt: string;
+  completedAt?: string;
+  webhook?: string;
+}
+
+// Agent types
+export interface AgentOptions {
+  prompt: string;
+  schema?: Record<string, unknown>;
+  urls?: string[];
+  search?: string;
+  limit?: number;
+}
+
+export interface AgentJob {
+  jobId: string;
+  status: 'running' | 'completed' | 'failed';
+  options: AgentOptions;
+  result?: Record<string, unknown>;
+  error?: string;
+  sources?: string[];
+  createdAt: string;
+  completedAt?: string;
 }

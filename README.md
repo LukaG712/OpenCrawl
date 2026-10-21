@@ -41,6 +41,10 @@ Scrape single pages, recursively crawl entire sites, and discover URLs - all ret
 - **Batch Scrape** - Scrape multiple URLs simultaneously as an async job
 - **Map** - Quickly discover URLs on a site via sitemaps and link extraction
 - **Search** - Query the web and return scraped results
+- **Interact** - Interact with pages after scraping: click, type, scroll, execute code in live browser sessions
+- **Extract** - Multi-page structured data extraction across multiple URLs
+- **Agent** - Prompt-driven research agent that searches, scrapes, and returns structured data
+- **Actions** - Drive pages before scraping: click, scroll, write, press keys, wait, screenshot, execute JS
 - **JSON Extraction** - Extract structured data using LLM-powered JSON schema extraction
 - **Branding Extraction** - Extract colors, fonts, logo, and theme from any webpage
 - **JavaScript rendering** - Headless browser fallback for SPA/JS-heavy pages
@@ -54,7 +58,7 @@ Scrape single pages, recursively crawl entire sites, and discover URLs - all ret
 - **URL deduplication** - Avoids scraping the same page twice
 - **Configurable limits** - Depth, page count, include/exclude path patterns
 - **Retry with backoff** - Automatic retries with exponential backoff for failed requests
-- **Webhooks** - Get notified when crawl or batch scrape jobs complete
+- **Webhooks** - Get notified when crawl or batch scrape jobs complete (with HMAC signatures)
 - **API key authentication** - Bearer token auth on all endpoints
 - **Rate limiting** - Per-key rate limiting to protect the service
 
@@ -159,6 +163,34 @@ POST /scrape
 | `mobile` | boolean | `false` | Use mobile viewport and user agent |
 | `parsePDF` | boolean | `false` | Force PDF parsing via browser |
 | `skipTlsVerification` | boolean | `false` | Skip TLS certificate verification |
+| `actions` | object[] | _(none)_ | Page interaction actions to run before scraping |
+
+**Actions** - Interact with a page before scraping:
+
+| Action | Parameters | Description |
+|--------|------------|-------------|
+| `wait` | `milliseconds?: number`, `selector?: string` | Wait for time or element |
+| `click` | `selector: string`, `all?: boolean` | Click element(s) |
+| `write` | `text: string` | Type text at cursor |
+| `press` | `key: string` | Press a key (e.g. `"Enter"`) |
+| `scroll` | `direction?: "up" \| "down"`, `selector?: string` | Scroll page or element |
+| `screenshot` | `fullPage?: boolean` | Capture screenshot mid-flow |
+| `scrape` | _(none)_ | Snapshot current DOM |
+| `executeJavascript` | `script: string` | Run arbitrary JS |
+
+**Actions example:**
+
+```json
+{
+  "url": "https://example.com",
+  "actions": [
+    { "type": "wait", "milliseconds": 1000 },
+    { "type": "click", "selector": "#accept-cookies" },
+    { "type": "scroll", "direction": "down" },
+    { "type": "wait", "milliseconds": 2000 }
+  ]
+}
+```
 
 **Response:**
 
@@ -469,6 +501,165 @@ POST /search
 
 Search uses DuckDuckGo by default. For better results, set up [SearXNG](https://github.com/searxng/searxng) and configure `SEARXNG_URL`.
 
+### Interact
+
+Interact with a page in a live browser session. Click, type, scroll, execute code, and extract the resulting page state.
+
+```
+POST /interact
+```
+
+**Request:**
+
+```json
+{
+  "scrapeId": "session-uuid",
+  "actions": [
+    { "type": "click", "selector": "#login-btn" },
+    { "type": "wait", "milliseconds": 1000 },
+    { "type": "click", "selector": "#username" },
+    { "type": "write", "text": "user@example.com" },
+    { "type": "press", "key": "Tab" },
+    { "type": "write", "text": "password123" },
+    { "type": "press", "key": "Enter" },
+    { "type": "wait", "milliseconds": 2000 }
+  ]
+}
+```
+
+Or use natural language prompts:
+
+```json
+{
+  "scrapeId": "session-uuid",
+  "prompt": "click #next-page and wait 2000"
+}
+```
+
+Or execute Playwright code directly:
+
+```json
+{
+  "scrapeId": "session-uuid",
+  "code": "await page.click('#submit'); await page.waitForLoadState('networkidle');"
+}
+```
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `scrapeId` | string | _(auto-created)_ | Browser session ID (returned by previous interact call) |
+| `actions` | object[] | _(none)_ | List of actions to execute |
+| `prompt` | string | _(none)_ | Natural language instruction |
+| `code` | string | _(none)_ | Playwright code to execute |
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "scrapeId": "session-uuid",
+  "data": {
+    "markdown": "...",
+    "metadata": { ... }
+  }
+}
+```
+
+Sessions persist for 30 minutes and are automatically cleaned up.
+
+### Extract
+
+Extract structured data from multiple URLs in one async job.
+
+```
+POST /extract
+```
+
+**Request:**
+
+```json
+{
+  "urls": ["https://example.com/pricing", "https://example.com/features"],
+  "prompt": "Extract pricing plans and features",
+  "schema": {
+    "type": "object",
+    "properties": {
+      "plans": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "name": { "type": "string" },
+            "price": { "type": "string" },
+            "features": { "type": "array", "items": { "type": "string" } }
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `urls` | string[] | _(required)_ | URLs to extract data from |
+| `prompt` | string | _(required)_ | Extraction instruction |
+| `schema` | object | _(none)_ | JSON Schema for structured output |
+
+**Status:** `GET /extract/:jobId`
+
+**Delete:** `DELETE /extract/:jobId`
+
+Requires `LLM_PROVIDER=openai` and `OPENAI_API_KEY`.
+
+### Agent
+
+Prompt-driven research agent that autonomously searches, scrapes, and returns structured data.
+
+```
+POST /agent
+```
+
+**Request:**
+
+```json
+{
+  "prompt": "Find the top 5 web scraping tools and their pricing",
+  "search": "web scraping tools 2024",
+  "limit": 10,
+  "schema": {
+    "type": "object",
+    "properties": {
+      "tools": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "name": { "type": "string" },
+            "pricing": { "type": "string" },
+            "website": { "type": "string" }
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `prompt` | string | _(required)_ | What data you want |
+| `search` | string | _(none)_ | Search query to find relevant pages |
+| `urls` | string[] | _(none)_ | Specific URLs to analyze |
+| `schema` | object | _(none)_ | JSON Schema for structured output |
+| `limit` | number | `5` | Max search results |
+
+**Status:** `GET /agent/:jobId`
+
+**Delete:** `DELETE /agent/:jobId`
+
+Requires `LLM_PROVIDER=openai` and `OPENAI_API_KEY`.
+
 ---
 
 ## Error Responses
@@ -519,6 +710,7 @@ All configuration is via environment variables. See `.env.example` for all optio
 | `SEARCH_PROVIDER` | `google` | Search provider (`google`, `searxng`) |
 | `SEARXNG_URL` | _(none)_ | SearXNG instance URL for search |
 | `LOG_LEVEL` | `info` | Log level (debug, info, warn, error) |
+| `WEBHOOK_SECRET` | _(none)_ | Secret for HMAC webhook signatures |
 
 ---
 
@@ -559,7 +751,7 @@ All configuration is via environment variables. See `.env.example` for all optio
 opencrawl/
 ├── src/
 │   ├── index.ts              # API server entry point
-│   ├── worker.ts             # Background worker entry point (crawl + batch scrape)
+│   ├── worker.ts             # Background worker entry point (crawl, batch scrape, extract, agent)
 │   ├── api/
 │   │   ├── server.ts         # Fastify app setup
 │   │   ├── middleware/
@@ -569,21 +761,33 @@ opencrawl/
 │   │       ├── crawl.ts      # POST /crawl, GET /crawl/:id, DELETE /crawl/:id
 │   │       ├── map.ts        # POST /map
 │   │       ├── batchScrape.ts # POST /batch_scrape, GET/DELETE /batch_scrape/:id
-│   │       └── search.ts     # POST /search
+│   │       ├── search.ts     # POST /search
+│   │       ├── interact.ts   # POST /interact
+│   │       ├── extract.ts    # POST /extract, GET/DELETE /extract/:id
+│   │       └── agent.ts      # POST /agent, GET/DELETE /agent/:id
 │   ├── services/
 │   │   ├── scrape/
 │   │   │   ├── index.ts      # Main scrape logic (HTTP + browser fallback, retry)
-│   │   │   ├── browser.ts    # Playwright browser management, screenshots
-│   │   │   └── content.ts    # HTML to markdown, metadata, branding, link extraction
+│   │   │   ├── browser.ts    # Playwright browser management, sessions, screenshots
+│   │   │   ├── content.ts    # HTML to markdown, metadata, branding, link extraction
+│   │   │   └── actions.ts    # Page interaction actions (click, scroll, write, etc.)
 │   │   ├── crawl/
 │   │   │   └── index.ts      # Crawl engine (URL discovery, robots.txt with caching)
 │   │   ├── map/
 │   │   │   └── index.ts      # URL discovery via sitemap + links
-│   │   └── search/
-│   │       └── index.ts      # Web search (DuckDuckGo / SearXNG)
+│   │   ├── search/
+│   │   │   └── index.ts      # Web search (DuckDuckGo / SearXNG)
+│   │   ├── interact/
+│   │   │   └── index.ts      # Browser session interaction
+│   │   ├── extract/
+│   │   │   └── index.ts      # Multi-page structured extraction
+│   │   └── agent/
+│   │       └── index.ts      # Prompt-driven research agent
 │   ├── queue/
 │   │   ├── crawlQueue.ts     # BullMQ crawl queue
-│   │   └── batchScrapeQueue.ts # BullMQ batch scrape queue
+│   │   ├── batchScrapeQueue.ts # BullMQ batch scrape queue
+│   │   ├── extractQueue.ts   # BullMQ extract queue
+│   │   └── agentQueue.ts     # BullMQ agent queue
 │   ├── database/
 │   │   └── redis.ts          # Redis connection
 │   ├── config/

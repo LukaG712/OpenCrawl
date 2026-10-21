@@ -80,6 +80,10 @@ async function searchWithGoogle(query: string, limit: number): Promise<SearxngRe
 }
 
 export async function search(options: SearchOptions): Promise<SearchResponse> {
+  return searchUrls(options);
+}
+
+export async function searchUrls(options: SearchOptions): Promise<SearchResponse> {
   const {
     query,
     limit = 5,

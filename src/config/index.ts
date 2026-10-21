@@ -56,6 +56,9 @@ const config = {
 
   // Logging
   logLevel: process.env.LOG_LEVEL || 'info',
+
+  // Webhooks
+  webhookSecret: process.env.WEBHOOK_SECRET || '',
 };
 
 export default config;

@@ -7,6 +7,9 @@ import { registerCrawlRoutes } from './routes/crawl';
 import { registerMapRoutes } from './routes/map';
 import { registerBatchScrapeRoutes } from './routes/batchScrape';
 import { registerSearchRoutes } from './routes/search';
+import { registerInteractRoutes } from './routes/interact';
+import { registerExtractRoutes } from './routes/extract';
+import { registerAgentRoutes } from './routes/agent';
 import config from '../config';
 import logger from '../utils/logger';
 
@@ -47,6 +50,9 @@ async function bootstrap() {
   registerMapRoutes(app);
   registerBatchScrapeRoutes(app);
   registerSearchRoutes(app);
+  registerInteractRoutes(app);
+  registerExtractRoutes(app);
+  registerAgentRoutes(app);
 
   // Error handler
   app.setErrorHandler((error, request, reply) => {

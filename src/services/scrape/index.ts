@@ -1,6 +1,6 @@
 import https from 'https';
 import http from 'http';
-import { ScrapeOptions, ScrapeResult, ScrapeData, ScrapeMetadata, ScrapeFormat, JsonFormatOptions } from '../../utils/types';
+import { ScrapeOptions, ScrapeResult, ScrapeData, ScrapeMetadata, ScrapeFormat, JsonFormatOptions, Action } from '../../utils/types';
 import { htmlToMarkdown, extractMetadata, extractLinks, cleanHtml, extractBranding } from './content';
 import { scrapeWithBrowser } from './browser';
 import logger from '../../utils/logger';
@@ -237,6 +237,7 @@ export async function scrapeUrl(options: ScrapeOptions): Promise<ScrapeResult> {
     removeBase64Images = false,
     mobile = false,
     parsePDF = false,
+    actions,
   } = options;
 
   logger.info(`Scraping URL: ${url}`);
@@ -249,6 +250,7 @@ export async function scrapeUrl(options: ScrapeOptions): Promise<ScrapeResult> {
   let titleFromBrowser = '';
   let screenshot: string | undefined;
   let responseHeaders: Record<string, string> | undefined;
+  let actionsResult: { screenshots?: string[]; scrapes?: string[]; javascriptReturns?: unknown[] } | undefined;
 
   try {
     // Try simple HTTP fetch first
@@ -280,9 +282,10 @@ export async function scrapeUrl(options: ScrapeOptions): Promise<ScrapeResult> {
     const hasContent = html.length > 500 && !html.includes('<div id="root"></div>');
     const needsScreenshot = formats.some((f) => getFormatString(f) === 'screenshot');
     const needsMobile = mobile;
+    const needsActions = actions && actions.length > 0;
 
-    if ((!hasContent && waitFor === 0) || needsScreenshot || needsMobile) {
-      logger.info(`Using browser for ${url} (content: ${hasContent}, screenshot: ${needsScreenshot}, mobile: ${needsMobile})`);
+    if ((!hasContent && waitFor === 0) || needsScreenshot || needsMobile || needsActions) {
+      logger.info(`Using browser for ${url} (content: ${hasContent}, screenshot: ${needsScreenshot}, mobile: ${needsMobile}, actions: ${needsActions})`);
       const browserResult = await scrapeWithBrowser(url, {
         waitFor,
         timeout,
@@ -290,6 +293,7 @@ export async function scrapeUrl(options: ScrapeOptions): Promise<ScrapeResult> {
         blockAds,
         screenshot: needsScreenshot,
         mobile,
+        actions,
       });
       html = browserResult.html;
       titleFromBrowser = browserResult.title;
@@ -298,6 +302,9 @@ export async function scrapeUrl(options: ScrapeOptions): Promise<ScrapeResult> {
       }
       if (browserResult.statusCode) {
         statusCode = browserResult.statusCode;
+      }
+      if (browserResult.actionsResult) {
+        actionsResult = browserResult.actionsResult;
       }
     }
   } catch (err) {
@@ -310,6 +317,7 @@ export async function scrapeUrl(options: ScrapeOptions): Promise<ScrapeResult> {
         blockAds,
         screenshot: formats.some((f) => getFormatString(f) === 'screenshot'),
         mobile,
+        actions,
       });
       html = browserResult.html;
       titleFromBrowser = browserResult.title;
@@ -317,6 +325,9 @@ export async function scrapeUrl(options: ScrapeOptions): Promise<ScrapeResult> {
         screenshot = browserResult.screenshot;
       }
       statusCode = browserResult.statusCode || 200;
+      if (browserResult.actionsResult) {
+        actionsResult = browserResult.actionsResult;
+      }
     } catch (browserErr) {
       return {
         success: false,
@@ -348,6 +359,11 @@ export async function scrapeUrl(options: ScrapeOptions): Promise<ScrapeResult> {
   const data: ScrapeData = {
     metadata,
   };
+
+  // Include actions results if any
+  if (actionsResult) {
+    data.actions = actionsResult;
+  }
 
   // Process each requested format
   for (const format of formats) {

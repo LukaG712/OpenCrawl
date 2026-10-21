@@ -1,10 +1,15 @@
 import { Job } from 'bullmq';
 import { createCrawlWorker } from './queue/crawlQueue';
 import { createBatchScrapeWorker } from './queue/batchScrapeQueue';
+import { getExtractQueue } from './queue/extractQueue';
+import { getAgentQueue } from './queue/agentQueue';
 import { crawl } from './services/crawl';
 import { scrapeUrl } from './services/scrape';
+import { extractFromUrls } from './services/extract';
+import { runAgent } from './services/agent';
 import { sendWebhook } from './utils/webhook';
-import { CrawlOptions, BatchScrapeOptions } from './utils/types';
+import { CrawlOptions, BatchScrapeOptions, ExtractOptions, AgentOptions } from './utils/types';
+import { cleanupExpiredSessions } from './services/scrape/browser';
 import logger from './utils/logger';
 
 async function processCrawlJob(job: Job<CrawlOptions>) {
@@ -126,6 +131,61 @@ async function processBatchScrapeJob(job: Job<BatchScrapeOptions>) {
   };
 }
 
+async function processExtractJob(job: Job<ExtractOptions>) {
+  logger.info(`Processing extract job ${job.id}`);
+
+  const options = job.data;
+
+  try {
+    const result = await extractFromUrls(options);
+
+    await job.moveToCompleted({
+      result,
+      completedAt: new Date().toISOString(),
+    }, '', true);
+
+    job.updateProgress({ status: 'completed' });
+
+    return { result };
+  } catch (err) {
+    const errorMsg = (err as Error).message;
+    logger.error(`Extract job failed: ${errorMsg}`);
+
+    await job.moveToFailed(new Error(errorMsg), '', true);
+    job.updateProgress({ status: 'failed' });
+
+    throw err;
+  }
+}
+
+async function processAgentJob(job: Job<AgentOptions>) {
+  logger.info(`Processing agent job ${job.id}`);
+
+  const options = job.data;
+
+  try {
+    const { result, sources } = await runAgent(options);
+
+    await job.moveToCompleted({
+      result,
+      sources,
+      completedAt: new Date().toISOString(),
+    }, '', true);
+
+    job.updateProgress({ status: 'completed' });
+
+    return { result, sources };
+  } catch (err) {
+    const errorMsg = (err as Error).message;
+    logger.error(`Agent job failed: ${errorMsg}`);
+
+    await job.moveToFailed(new Error(errorMsg), '', true);
+    job.updateProgress({ status: 'failed' });
+
+    throw err;
+  }
+}
+
 async function main() {
   logger.info('Starting workers...');
 
@@ -135,28 +195,59 @@ async function main() {
   // Batch scrape worker
   const batchScrapeWorker = createBatchScrapeWorker(processBatchScrapeJob);
 
-  crawlWorker.on('error', (err) => {
+  // Extract worker
+  const extractWorker = new (require('bullmq').Worker)('extract-queue', processExtractJob, {
+    connection: require('./database/redis').getRedisClient(),
+  });
+
+  // Agent worker
+  const agentWorker = new (require('bullmq').Worker)('agent-queue', processAgentJob, {
+    connection: require('./database/redis').getRedisClient(),
+  });
+
+  crawlWorker.on('error', (err: Error) => {
     logger.error(`Crawl worker error: ${err.message}`);
   });
 
-  batchScrapeWorker.on('error', (err) => {
+  batchScrapeWorker.on('error', (err: Error) => {
     logger.error(`Batch scrape worker error: ${err.message}`);
   });
+
+  extractWorker.on('error', (err: Error) => {
+    logger.error(`Extract worker error: ${err.message}`);
+  });
+
+  agentWorker.on('error', (err: Error) => {
+    logger.error(`Agent worker error: ${err.message}`);
+  });
+
+  // Periodic session cleanup
+  const cleanupInterval = setInterval(() => {
+    cleanupExpiredSessions().catch((err: Error) => {
+      logger.error(`Session cleanup error: ${err.message}`);
+    });
+  }, 5 * 60 * 1000); // Every 5 minutes
 
   logger.info('All workers are ready');
 
   // Graceful shutdown
   process.on('SIGINT', async () => {
     logger.info('Shutting down workers...');
+    clearInterval(cleanupInterval);
     await crawlWorker.close();
     await batchScrapeWorker.close();
+    await extractWorker.close();
+    await agentWorker.close();
     process.exit(0);
   });
 
   process.on('SIGTERM', async () => {
     logger.info('Shutting down workers...');
+    clearInterval(cleanupInterval);
     await crawlWorker.close();
     await batchScrapeWorker.close();
+    await extractWorker.close();
+    await agentWorker.close();
     process.exit(0);
   });
 }

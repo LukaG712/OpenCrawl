@@ -1,9 +1,21 @@
 import { chromium, Browser, BrowserContext, Page } from 'playwright';
 import config from '../../config';
 import logger from '../../utils/logger';
+import { Action } from '../../utils/types';
+import { executeActions, ActionsResult } from './actions';
 
 let browser: Browser | null = null;
 let browserContext: BrowserContext | null = null;
+
+// Session storage for /interact endpoint
+interface BrowserSession {
+  context: BrowserContext;
+  page: Page;
+  createdAt: number;
+}
+
+const sessions = new Map<string, BrowserSession>();
+const SESSION_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
 
 export async function getBrowser(): Promise<Browser> {
   if (!browser) {
@@ -40,17 +52,20 @@ export async function getContext(options?: { mobile?: boolean }): Promise<Browse
   return browserContext;
 }
 
+export interface BrowserScrapeOptions {
+  waitFor?: number;
+  timeout?: number;
+  headers?: Record<string, string>;
+  blockAds?: boolean;
+  screenshot?: boolean;
+  mobile?: boolean;
+  actions?: Action[];
+}
+
 export async function scrapeWithBrowser(
   url: string,
-  options: {
-    waitFor?: number;
-    timeout?: number;
-    headers?: Record<string, string>;
-    blockAds?: boolean;
-    screenshot?: boolean;
-    mobile?: boolean;
-  } = {}
-): Promise<{ html: string; title: string; screenshot?: string; statusCode?: number }> {
+  options: BrowserScrapeOptions = {}
+): Promise<{ html: string; title: string; screenshot?: string; statusCode?: number; actionsResult?: ActionsResult }> {
   const context = await getContext({ mobile: options.mobile });
   const page: Page = await context.newPage();
 
@@ -122,16 +137,82 @@ export async function scrapeWithBrowser(
       screenshot = buf.toString('base64');
     }
 
+    // Execute actions if provided
+    let actionsResult: ActionsResult | undefined;
+    let finalHtml = html;
+    let finalTitle = title;
+    if (options.actions && options.actions.length > 0) {
+      actionsResult = await executeActions(page, options.actions);
+      // Re-extract HTML after actions may have changed the page
+      finalHtml = await page.content();
+      finalTitle = await page.title();
+    }
+
     const statusCode = response?.status();
     logger.info(`Browser scrape completed for ${url}, status: ${statusCode}`);
 
-    return { html, title, screenshot, statusCode };
+    return { html: finalHtml, title: finalTitle, screenshot, statusCode, actionsResult };
   } finally {
     await page.close();
   }
 }
 
+// Session management for /interact endpoint
+export async function createSession(options?: { mobile?: boolean }): Promise<string> {
+  const context = await getContext({ mobile: options?.mobile });
+  const page = await context.newPage();
+  const sessionId = crypto.randomUUID();
+  sessions.set(sessionId, { context, page, createdAt: Date.now() });
+  logger.info(`Created browser session: ${sessionId}`);
+  return sessionId;
+}
+
+export async function getSession(sessionId: string): Promise<BrowserSession | null> {
+  const session = sessions.get(sessionId);
+  if (!session) return null;
+
+  // Check if session has timed out
+  if (Date.now() - session.createdAt > SESSION_TIMEOUT_MS) {
+    await session.page.close();
+    await session.context.close();
+    sessions.delete(sessionId);
+    return null;
+  }
+
+  // Reset timeout on access
+  session.createdAt = Date.now();
+  return session;
+}
+
+export async function closeSession(sessionId: string): Promise<void> {
+  const session = sessions.get(sessionId);
+  if (session) {
+    await session.page.close();
+    await session.context.close();
+    sessions.delete(sessionId);
+    logger.info(`Closed browser session: ${sessionId}`);
+  }
+}
+
+export async function cleanupExpiredSessions(): Promise<void> {
+  const now = Date.now();
+  for (const [id, session] of sessions.entries()) {
+    if (now - session.createdAt > SESSION_TIMEOUT_MS) {
+      await session.page.close().catch(() => {});
+      await session.context.close().catch(() => {});
+      sessions.delete(id);
+    }
+  }
+}
+
 export async function closeBrowser(): Promise<void> {
+  // Close all sessions
+  for (const [id, session] of sessions.entries()) {
+    await session.page.close().catch(() => {});
+    await session.context.close().catch(() => {});
+    sessions.delete(id);
+  }
+
   if (browserContext) {
     await browserContext.close();
     browserContext = null;
@@ -142,3 +223,4 @@ export async function closeBrowser(): Promise<void> {
     logger.info('Browser closed');
   }
 }
+
