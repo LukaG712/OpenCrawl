@@ -1,10 +1,15 @@
 # Trapper
 
+> *"Gotta stop dat King Boo, 'cause he broke up the whole Dark Moon dude!"*
+> ~ **Prof. E. Gadd**, Luigi's Mansion: Dark Moon
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue.svg)](https://www.typescriptlang.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg)](https://nodejs.org/)
 [![Docker](https://img.shields.io/badge/Docker-ready-blue.svg)](https://www.docker.com/)
 [![API](https://img.shields.io/badge/API-REST-orange.svg)](https://restfulapi.net/)
+
+**Luigi's Mansion origin:** *Trapper* ~ ghost enemies from Luigi's Mansion 3 that trap and capture.
 
 A self-hosted, open-source web scraping and crawling API that turns websites into clean, LLM-ready data.
 
@@ -815,6 +820,8 @@ npm test
 ## License
 
 MIT - see [LICENSE](LICENSE) for details.
+
+**Repo:** [LukaG712/Trapper](https://github.com/LukaG712/Trapper)
 
 ---
 
