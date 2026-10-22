@@ -837,3 +837,7 @@ Contributions are welcome! Please open an issue or pull request.
 | <img src="https://github.com/LukaG712.png" width="40" height="40" alt="LukaG712" /> | [LukaG712](https://github.com/LukaG712) |
 |:---:|---|
 | Creator & Maintainer | Original author, full implementation |
+
+---
+
+> **Disclaimer:** This project is a fan-made, independent software project. It is not affiliated with, endorsed by, or in any way connected to Nintendo, Next Level Games, or any of their subsidiaries. All Luigi's Mansion trademarks and character names are property of their respective owners. Service names are used purely for thematic inspiration.

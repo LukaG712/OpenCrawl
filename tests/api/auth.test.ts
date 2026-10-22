@@ -26,13 +26,13 @@ describe('API Key Authentication', () => {
   });
 
   describe('Missing API key', () => {
-    it('rejects when no authorization header or query param', async () => {
+    it('rejects when no authorization header', async () => {
       request = mockRequest({});
       await apiKeyAuth(request, reply, () => { doneCalled = true; });
 
       expect(reply.code).toHaveBeenCalledWith(401);
       expect(reply.send).toHaveBeenCalledWith(
-        expect.objectContaining({ success: false, error: expect.stringContaining('Missing API key') })
+        expect.objectContaining({ success: false, error: expect.stringContaining('Authorization') })
       );
       expect(doneCalled).toBe(false);
     });
@@ -58,39 +58,29 @@ describe('API Key Authentication', () => {
       expect(doneCalled).toBe(false);
     });
 
-    it('ignores non-Bearer authorization header', async () => {
+    it('rejects non-Bearer authorization header', async () => {
       request = mockRequest({ authorization: 'Token some-token' });
       await apiKeyAuth(request, reply, () => { doneCalled = true; });
 
       expect(reply.code).toHaveBeenCalledWith(401);
       expect(reply.send).toHaveBeenCalledWith(
-        expect.objectContaining({ success: false, error: expect.stringContaining('Missing API key') })
+        expect.objectContaining({ success: false, error: expect.stringContaining('Authorization') })
       );
     });
   });
 
   describe('Query parameter authentication', () => {
-    it('accepts valid api-key query param', async () => {
+    it('rejects api-key query param (Bearer only)', async () => {
       request = mockRequest({}, { 'api-key': config.apiKey });
       await apiKeyAuth(request, reply, () => { doneCalled = true; });
 
-      expect(doneCalled).toBe(true);
-      expect(reply.code).not.toHaveBeenCalled();
-    });
-
-    it('rejects invalid api-key query param', async () => {
-      request = mockRequest({}, { 'api-key': 'wrong-key' });
-      await apiKeyAuth(request, reply, () => { doneCalled = true; });
-
+      expect(doneCalled).toBe(false);
       expect(reply.code).toHaveBeenCalledWith(401);
-      expect(reply.send).toHaveBeenCalledWith(
-        expect.objectContaining({ success: false, error: 'Invalid API key' })
-      );
     });
   });
 
   describe('Priority', () => {
-    it('prefers Bearer token over query param', async () => {
+    it('uses Bearer token', async () => {
       request = mockRequest({ authorization: `Bearer ${config.apiKey}` }, { 'api-key': 'wrong-key' });
       await apiKeyAuth(request, reply, () => { doneCalled = true; });
 

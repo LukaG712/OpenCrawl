@@ -68,7 +68,7 @@ describe('Server API', () => {
       expect(response.statusCode).toBe(401);
       const body = JSON.parse(response.payload);
       expect(body.success).toBe(false);
-      expect(body.error).toContain('Missing API key');
+      expect(body.error).toContain('Authorization');
     });
 
     it('rejects requests with invalid API key', async () => {
@@ -97,14 +97,14 @@ describe('Server API', () => {
       expect(response.statusCode).toBe(400);
     });
 
-    it('accepts requests with api-key query param', async () => {
+    it('rejects requests with api-key query param (Bearer only)', async () => {
       const response = await server.inject({
         method: 'POST',
         url: '/scrape?api-key=Trapper-dev-key-change-me',
         payload: { url: 'not-a-url' },
       });
 
-      expect(response.statusCode).toBe(400);
+      expect(response.statusCode).toBe(401);
     });
   });
 

@@ -4,6 +4,7 @@ import zlib from 'zlib';
 import { ScrapeOptions, ScrapeResult, ScrapeData, ScrapeMetadata, ScrapeFormat, JsonFormatOptions, Action } from '../../utils/types';
 import { htmlToMarkdown, extractMetadata, extractLinks, cleanHtml, extractBranding } from './content';
 import { scrapeWithBrowser } from './browser';
+import { isBlockedUrl } from '../../utils/ssrfProtection';
 import logger from '../../utils/logger';
 import config from '../../config';
 
@@ -256,6 +257,15 @@ export async function scrapeUrl(options: ScrapeOptions): Promise<ScrapeResult> {
     parsePDF = false,
     actions,
   } = options;
+
+  // SSRF protection: block requests to private/reserved addresses
+  if (isBlockedUrl(url)) {
+    logger.warn(`SSRF blocked: request to ${url} denied`);
+    return {
+      success: false,
+      error: `Request blocked: URL points to a private or reserved address (SSRF protection)`,
+    };
+  }
 
   logger.info(`Scraping URL: ${url}`);
 
