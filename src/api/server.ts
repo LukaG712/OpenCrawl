@@ -39,6 +39,57 @@ async function bootstrap() {
     return { status: 'ok', timestamp: new Date().toISOString() };
   });
 
+  // Capabilities (no auth required)
+  app.get('/api/capabilities', async () => {
+    return {
+      service: 'Trapper',
+      version: '1.0.0',
+      features: {
+        scrape: {
+          supported: true,
+          description: 'Single page scraping with browser rendering',
+        },
+        crawl: {
+          supported: true,
+          description: 'Multi-page site crawling with depth control',
+        },
+        map: {
+          supported: true,
+          description: 'Site URL discovery and mapping',
+        },
+        batch_scrape: {
+          supported: true,
+          description: 'Batch scraping of multiple URLs',
+        },
+        search: {
+          supported: true,
+          description: 'Web search integration',
+        },
+        interact: {
+          supported: true,
+          description: 'Page interaction (clicks, form fills, etc.)',
+        },
+        extract: {
+          supported: true,
+          description: 'Structured data extraction',
+        },
+        agent: {
+          supported: true,
+          description: 'Autonomous research agent',
+        },
+        ssrf_protection: {
+          supported: true,
+          description: 'SSRF protection for private IPs and metadata endpoints',
+        },
+        rate_limiting: {
+          supported: true,
+          description: 'Rate limiting per API key',
+        },
+      },
+      api_versions: ['v1'],
+    };
+  });
+
   // Apply auth to all API routes (skip health check)
   app.addHook('onRequest', async (request, reply) => {
     await apiKeyAuth(request, reply, () => {});
